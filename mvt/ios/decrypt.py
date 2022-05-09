@@ -1,11 +1,12 @@
 # Mobile Verification Toolkit (MVT)
-# Copyright (c) 2021-2022 The MVT Project Authors.
+# Copyright (c) 2021-2022 Claudio Guarnieri.
 # Use of this software is governed by the MVT License 1.1 that can be found at
 #   https://license.mvt.re/1.1/
 
 import binascii
 import glob
 import logging
+import multiprocessing
 import os
 import os.path
 import shutil
@@ -53,6 +54,12 @@ class DecryptBackup:
             log.critical("The backup does not seem encrypted!")
             return False
 
+    def _process_file(self, relative_path, domain, item, file_id, item_folder):
+        self._backup.getFileDecryptedCopy(manifestEntry=item,
+                                          targetName=file_id,
+                                          targetFolder=item_folder)
+        log.info("Decrypted file %s [%s] to %s/%s", relative_path, domain, item_folder, file_id)
+
     def process_backup(self):
         if not os.path.exists(self.dest_path):
             os.makedirs(self.dest_path)
@@ -62,6 +69,8 @@ class DecryptBackup:
         self._backup.getManifestDB()
         # We store it to the destination folder.
         shutil.copy(self._backup.manifestDB, manifest_path)
+
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
         for item in self._backup.getBackupFilesList():
             try:
@@ -85,12 +94,15 @@ class DecryptBackup:
                 # Add manifest plist to both keys to handle this.
                 item["manifest"] = item["file"]
 
-                self._backup.getFileDecryptedCopy(manifestEntry=item,
-                                                  targetName=file_id,
-                                                  targetFolder=item_folder)
-                log.info("Decrypted file %s [%s] to %s/%s", relative_path, domain, item_folder, file_id)
+                pool.apply_async(self._process_file, args=(relative_path,
+                                                           domain, item,
+                                                           file_id,
+                                                           item_folder))
             except Exception as e:
                 log.error("Failed to decrypt file %s: %s", relative_path, e)
+
+        pool.close()
+        pool.join()
 
         # Copying over the root plist files as well.
         for file_name in os.listdir(self.backup_path):

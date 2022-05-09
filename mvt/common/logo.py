@@ -1,11 +1,12 @@
 # Mobile Verification Toolkit (MVT)
-# Copyright (c) 2021-2022 The MVT Project Authors.
+# Copyright (c) 2021-2022 Claudio Guarnieri.
 # Use of this software is governed by the MVT License 1.1 that can be found at
 #   https://license.mvt.re/1.1/
 
 from rich import print
 
-from .version import MVT_VERSION, check_for_updates
+from .updates import check_for_updates
+from .version import MVT_VERSION
 
 
 def logo():
