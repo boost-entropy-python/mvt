@@ -1,6 +1,6 @@
 version: "1"
 rules:
   - base: main
-    upstream: null:main
+    upstream: mvt-project:main
     mergeMethod: merge
     mergeUnstable: true
