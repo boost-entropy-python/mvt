@@ -3,15 +3,13 @@
 # Use of this software is governed by the MVT License 1.1 that can be found at
 #   https://license.mvt.re/1.1/
 
-import hashlib
-import logging
-
 from mvt.android.parsers.dumpsys import parse_dumpsys_appops
 
 from ..utils import get_artifact
 
 
 class TestDumpsysParsing:
+
     def test_appops_parsing(self):
         file = get_artifact("android_data/dumpsys_appops.txt")
         with open(file) as f:

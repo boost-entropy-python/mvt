@@ -4,6 +4,7 @@
 #   https://license.mvt.re/1.1/
 
 import io
+import logging
 import os
 import plistlib
 import sqlite3
@@ -23,15 +24,16 @@ SAFARI_BROWSER_STATE_ROOT_PATHS = [
 class SafariBrowserState(IOSExtraction):
     """This module extracts all Safari browser state records."""
 
-    def __init__(self, file_path=None, base_folder=None, output_folder=None,
-                 fast_mode=False, log=None, results=[]):
-        super().__init__(file_path=file_path, base_folder=base_folder,
-                         output_folder=output_folder, fast_mode=fast_mode,
+    def __init__(self, file_path: str = None, target_path: str = None,
+                 results_path: str = None, fast_mode: bool = False,
+                 log: logging.Logger = None, results: list = []) -> None:
+        super().__init__(file_path=file_path, target_path=target_path,
+                         results_path=results_path, fast_mode=fast_mode,
                          log=log, results=results)
 
         self._session_history_count = 0
 
-    def serialize(self, record):
+    def serialize(self, record: dict) -> None:
         return {
             "timestamp": record["last_viewed_timestamp"],
             "module": self.__class__.__name__,
@@ -39,7 +41,7 @@ class SafariBrowserState(IOSExtraction):
             "data": f"{record['tab_title']} - {record['tab_url']}"
         }
 
-    def check_indicators(self):
+    def check_indicators(self) -> None:
         if not self.indicators:
             return
 
@@ -115,10 +117,10 @@ class SafariBrowserState(IOSExtraction):
                 "tab_visible_url": row[2],
                 "last_viewed_timestamp": convert_timestamp_to_iso(convert_mactime_to_unix(row[3])),
                 "session_data": session_entries,
-                "safari_browser_state_db": os.path.relpath(db_path, self.base_folder),
+                "safari_browser_state_db": os.path.relpath(db_path, self.target_path),
             })
 
-    def run(self):
+    def run(self) -> None:
         if self.is_backup:
             for backup_file in self._get_backup_files_from_manifest(relative_path=SAFARI_BROWSER_STATE_BACKUP_RELPATH):
                 self.file_path = self._get_backup_file_from_id(backup_file["file_id"])

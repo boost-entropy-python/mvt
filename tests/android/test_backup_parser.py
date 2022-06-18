@@ -4,7 +4,6 @@
 #   https://license.mvt.re/1.1/
 
 import hashlib
-import logging
 
 from mvt.android.parsers.backup import parse_backup_file, parse_tar_for_sms
 
@@ -12,6 +11,7 @@ from ..utils import get_artifact
 
 
 class TestBackupParsing:
+
     def test_parsing_noencryption(self):
         file = get_artifact("android_backup/backup.ab")
         with open(file, "rb") as f:
