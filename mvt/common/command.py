@@ -105,8 +105,15 @@ class Command(object):
                         file_path = os.path.join(root, file)
                         h = hashlib.sha256()
 
-                        with open(file_path, "rb") as handle:
-                            h.update(handle.read())
+                        try:
+                            with open(file_path, "rb") as handle:
+                                h.update(handle.read())
+                        except FileNotFoundError:
+                            self.log.error("Failed to hash the file %s: might be a symlink", file_path)
+                            continue
+                        except PermissionError:
+                            self.log.error("Failed to hash the file %s: permission denied", file_path)
+                            continue
 
                         info["hashes"].append({
                             "file_path": file_path,
