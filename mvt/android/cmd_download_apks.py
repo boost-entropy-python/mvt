@@ -44,11 +44,12 @@ class DownloadAPKs(AndroidExtraction):
                          or filter known-goods
         :param packages: Provided list of packages, typically for JSON checks
         """
-        super().__init__(output_folder=output_folder, log=log)
+        super().__init__(log=log)
 
         self.packages = packages
         self.all_apks = all_apks
         self.output_folder_apk = None
+        self.output_folder = output_folder
 
     @classmethod
     def from_json(cls, json_path):
@@ -114,6 +115,7 @@ class DownloadAPKs(AndroidExtraction):
 
         m = Packages()
         m.log = self.log
+        m.serial = self.serial
         m.run()
 
         self.packages = m.results
