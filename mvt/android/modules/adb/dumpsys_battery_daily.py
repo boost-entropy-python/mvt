@@ -4,6 +4,7 @@
 #   https://license.mvt.re/1.1/
 
 import logging
+from typing import Union
 
 from mvt.android.parsers import parse_dumpsys_battery_daily
 
@@ -21,12 +22,13 @@ class DumpsysBatteryDaily(AndroidExtraction):
                          results_path=results_path, fast_mode=fast_mode,
                          log=log, results=results)
 
-    def serialize(self, record: dict) -> None:
+    def serialize(self, record: dict) -> Union[dict, list]:
         return {
             "timestamp": record["from"],
             "module": self.__class__.__name__,
             "event": "battery_daily",
-            "data": f"Recorded update of package {record['package_name']} with vers {record['vers']}"
+            "data": f"Recorded update of package {record['package_name']} "
+                    f"with vers {record['vers']}"
         }
 
     def check_indicators(self) -> None:

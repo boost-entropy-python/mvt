@@ -5,6 +5,7 @@
 
 import logging
 import plistlib
+from typing import Union
 
 from mvt.common.utils import convert_mactime_to_unix, convert_timestamp_to_iso
 
@@ -42,7 +43,7 @@ class LocationdClients(IOSExtraction):
             "BeaconRegionTimeStopped",
         ]
 
-    def serialize(self, record: dict) -> None:
+    def serialize(self, record: dict) -> Union[dict, list]:
         records = []
         for timestamp in self.timestamps:
             if timestamp in record.keys():
@@ -102,12 +103,12 @@ class LocationdClients(IOSExtraction):
         with open(file_path, "rb") as handle:
             file_plist = plistlib.load(handle)
 
-        for key, values in file_plist.items():
+        for key, _ in file_plist.items():
             result = file_plist[key]
             result["package"] = key
-            for ts in self.timestamps:
-                if ts in result.keys():
-                    result[ts] = convert_timestamp_to_iso(convert_mactime_to_unix(result[ts]))
+            for timestamp in self.timestamps:
+                if timestamp in result.keys():
+                    result[timestamp] = convert_timestamp_to_iso(convert_mactime_to_unix(result[timestamp]))
 
             self.results.append(result)
 

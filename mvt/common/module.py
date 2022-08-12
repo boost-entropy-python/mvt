@@ -7,7 +7,7 @@ import csv
 import logging
 import os
 import re
-from typing import Callable
+from typing import Callable, Union
 
 import simplejson as json
 
@@ -24,7 +24,7 @@ class InsufficientPrivileges(Exception):
     pass
 
 
-class MVTModule(object):
+class MVTModule:
     """This class provides a base for all extraction modules."""
 
     enabled = True
@@ -37,7 +37,8 @@ class MVTModule(object):
 
         :param file_path: Path to the module's database file, if there is any
         :type file_path: str
-        :param target_path: Path to the target folder (backup or filesystem dump)
+        :param target_path: Path to the target folder (backup or filesystem
+                            dump)
         :type file_path: str
         :param results_path: Folder where results will be stored
         :type results_path: str
@@ -92,7 +93,8 @@ class MVTModule(object):
 
         if self.results:
             results_file_name = f"{name}.json"
-            results_json_path = os.path.join(self.results_path, results_file_name)
+            results_json_path = os.path.join(self.results_path,
+                                             results_file_name)
             with open(results_json_path, "w", encoding="utf-8") as handle:
                 try:
                     json.dump(self.results, handle, indent=4, default=str)
@@ -102,11 +104,12 @@ class MVTModule(object):
 
         if self.detected:
             detected_file_name = f"{name}_detected.json"
-            detected_json_path = os.path.join(self.results_path, detected_file_name)
+            detected_json_path = os.path.join(self.results_path,
+                                              detected_file_name)
             with open(detected_json_path, "w", encoding="utf-8") as handle:
                 json.dump(self.detected, handle, indent=4, default=str)
 
-    def serialize(self, record: dict) -> None:
+    def serialize(self, record: dict) -> Union[dict, list]:
         raise NotImplementedError
 
     @staticmethod
@@ -126,7 +129,7 @@ class MVTModule(object):
         for result in self.results:
             record = self.serialize(result)
             if record:
-                if type(record) == list:
+                if isinstance(record, list):
                     self.timeline.extend(record)
                 else:
                     self.timeline.append(record)
@@ -134,7 +137,7 @@ class MVTModule(object):
         for detected in self.detected:
             record = self.serialize(detected)
             if record:
-                if type(record) == list:
+                if isinstance(record, list):
                     self.timeline_detected.extend(record)
                 else:
                     self.timeline_detected.append(record)
@@ -157,7 +160,8 @@ def run_module(module: Callable) -> None:
         module.log.exception("The run() procedure of module %s was not implemented yet!",
                              module.__class__.__name__)
     except InsufficientPrivileges as e:
-        module.log.info("Insufficient privileges for module %s: %s", module.__class__.__name__, e)
+        module.log.info("Insufficient privileges for module %s: %s",
+                        module.__class__.__name__, e)
     except DatabaseNotFoundError as e:
         module.log.info("There might be no data to extract by module %s: %s",
                         module.__class__.__name__, e)
@@ -173,7 +177,6 @@ def run_module(module: Callable) -> None:
         except NotImplementedError:
             module.log.info("The %s module does not support checking for indicators",
                             module.__class__.__name__)
-            pass
         else:
             if module.indicators and not module.detected:
                 module.log.info("The %s module produced no detections!",
@@ -198,7 +201,9 @@ def save_timeline(timeline: list, timeline_path: str) -> None:
         csvoutput = csv.writer(handle, delimiter=",", quotechar="\"",
                                quoting=csv.QUOTE_ALL)
         csvoutput.writerow(["UTC Timestamp", "Plugin", "Event", "Description"])
-        for event in sorted(timeline, key=lambda x: x["timestamp"] if x["timestamp"] is not None else ""):
+
+        for event in sorted(timeline, key=lambda x: x["timestamp"]
+                            if x["timestamp"] is not None else ""):
             csvoutput.writerow([
                 event.get("timestamp"),
                 event.get("module"),

@@ -4,6 +4,7 @@
 #   https://license.mvt.re/1.1/
 
 import logging
+from typing import Union
 
 from rich.console import Console
 from rich.progress import track
@@ -78,7 +79,7 @@ class Packages(AndroidExtraction):
                          results_path=results_path, fast_mode=fast_mode,
                          log=log, results=results)
 
-    def serialize(self, record: dict) -> None:
+    def serialize(self, record: dict) -> Union[dict, list]:
         records = []
 
         timestamps = [
@@ -87,11 +88,11 @@ class Packages(AndroidExtraction):
             {"event": "package_last_update", "timestamp": record["last_update_time"]},
         ]
 
-        for ts in timestamps:
+        for timestamp in timestamps:
             records.append({
-                "timestamp": ts["timestamp"],
+                "timestamp": timestamp["timestamp"],
                 "module": self.__class__.__name__,
-                "event": ts["event"],
+                "event": timestamp["event"],
                 "data": f"{record['package_name']} (system: {record['system']}, third party: {record['third_party']})",
             })
 
@@ -222,10 +223,10 @@ class Packages(AndroidExtraction):
         for file_path in output.splitlines():
             file_path = file_path.strip()
 
-            md5 = self._adb_command(f"md5sum {file_path}").split(" ")[0]
-            sha1 = self._adb_command(f"sha1sum {file_path}").split(" ")[0]
-            sha256 = self._adb_command(f"sha256sum {file_path}").split(" ")[0]
-            sha512 = self._adb_command(f"sha512sum {file_path}").split(" ")[0]
+            md5 = self._adb_command(f"md5sum {file_path}").split(" ", maxsplit=1)[0]
+            sha1 = self._adb_command(f"sha1sum {file_path}").split(" ", maxsplit=1)[0]
+            sha256 = self._adb_command(f"sha256sum {file_path}").split(" ", maxsplit=1)[0]
+            sha512 = self._adb_command(f"sha512sum {file_path}").split(" ", maxsplit=1)[0]
 
             package_files.append({
                 "path": file_path,

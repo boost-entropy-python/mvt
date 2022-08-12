@@ -7,6 +7,7 @@ import datetime
 import logging
 import os
 import stat
+from typing import Union
 
 from mvt.common.utils import convert_timestamp_to_iso
 
@@ -34,7 +35,7 @@ class Files(AndroidExtraction):
                          log=log, results=results)
         self.full_find = False
 
-    def serialize(self, record: dict) -> None:
+    def serialize(self, record: dict) -> Union[dict, list]:
         if "modified_time" in record:
             return {
                 "timestamp": record["modified_time"],
@@ -42,6 +43,8 @@ class Files(AndroidExtraction):
                 "event": "file_modified",
                 "data": record["path"],
             }
+
+        return None
 
     def check_indicators(self) -> None:
         for result in self.results:

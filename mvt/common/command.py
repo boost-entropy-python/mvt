@@ -17,13 +17,14 @@ from mvt.common.utils import convert_timestamp_to_iso
 from mvt.common.version import MVT_VERSION
 
 
-class Command(object):
+class Command:
 
     def __init__(self, target_path: str = None, results_path: str = None,
-                 ioc_files: list = [], module_name: str = None, serial: str = None,
-                 fast_mode: bool = False,
+                 ioc_files: list = [], module_name: str = None,
+                 serial: str = None, fast_mode: bool = False,
                  log: logging.Logger = logging.getLogger(__name__)):
         self.name = ""
+        self.modules = []
 
         self.target_path = target_path
         self.results_path = results_path
@@ -56,11 +57,12 @@ class Command(object):
         if not self.results_path:
             return
 
-        fh = logging.FileHandler(os.path.join(self.results_path, "command.log"))
+        file_handler = logging.FileHandler(os.path.join(self.results_path,
+                                                        "command.log"))
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     def _store_timeline(self) -> None:
         if not self.results_path:
@@ -72,7 +74,8 @@ class Command(object):
 
         if len(self.timeline_detected) > 0:
             save_timeline(self.timeline_detected,
-                          os.path.join(self.results_path, "timeline_detected.csv"))
+                          os.path.join(self.results_path,
+                                       "timeline_detected.csv"))
 
     def _store_info(self) -> None:
         if not self.results_path:
@@ -99,40 +102,44 @@ class Command(object):
         #       enough.
         if self.target_path and os.environ.get("MVT_HASH_FILES"):
             if os.path.isfile(self.target_path):
-                h = hashlib.sha256()
+                sha256 = hashlib.sha256()
                 with open(self.target_path, "rb") as handle:
-                    h.update(handle.read())
+                    sha256.update(handle.read())
 
                 info["hashes"].append({
                     "file_path": self.target_path,
-                    "sha256": h.hexdigest(),
+                    "sha256": sha256.hexdigest(),
                 })
             elif os.path.isdir(self.target_path):
-                for (root, dirs, files) in os.walk(self.target_path):
+                for (root, _, files) in os.walk(self.target_path):
                     for file in files:
                         file_path = os.path.join(root, file)
-                        h = hashlib.sha256()
+                        sha256 = hashlib.sha256()
 
                         try:
                             with open(file_path, "rb") as handle:
-                                h.update(handle.read())
+                                sha256.update(handle.read())
                         except FileNotFoundError:
-                            self.log.error("Failed to hash the file %s: might be a symlink", file_path)
+                            self.log.error("Failed to hash the file %s: might be a symlink",
+                                           file_path)
                             continue
                         except PermissionError:
-                            self.log.error("Failed to hash the file %s: permission denied", file_path)
+                            self.log.error("Failed to hash the file %s: permission denied",
+                                           file_path)
                             continue
 
                         info["hashes"].append({
                             "file_path": file_path,
-                            "sha256": h.hexdigest(),
+                            "sha256": sha256.hexdigest(),
                         })
 
-        with open(os.path.join(self.results_path, "info.json"), "w+") as handle:
+        info_path = os.path.join(self.results_path, "info.json")
+        with open(info_path, "w+", encoding="utf-8") as handle:
             json.dump(info, handle, indent=4)
 
     def list_modules(self) -> None:
-        self.log.info("Following is the list of available %s modules:", self.name)
+        self.log.info("Following is the list of available %s modules:",
+                      self.name)
         for module in self.modules:
             self.log.info(" - %s", module.__name__)
 

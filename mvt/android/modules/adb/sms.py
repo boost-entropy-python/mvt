@@ -6,6 +6,7 @@
 import logging
 import os
 import sqlite3
+from typing import Union
 
 from mvt.android.parsers.backup import (AndroidBackupParsingError,
                                         parse_tar_for_sms)
@@ -52,7 +53,9 @@ class SMS(AndroidExtraction):
                          results_path=results_path, fast_mode=fast_mode,
                          log=log, results=results)
 
-    def serialize(self, record: dict) -> None:
+        self.sms_db_type = 0
+
+    def serialize(self, record: dict) -> Union[dict, list]:
         body = record["body"].replace("\n", "\\n")
         return {
             "timestamp": record["isodate"],
@@ -83,9 +86,9 @@ class SMS(AndroidExtraction):
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
 
-        if self.SMS_DB_TYPE == 1:
+        if self.sms_db_type == 1:
             cur.execute(SMS_BUGLE_QUERY)
-        elif self.SMS_DB_TYPE == 2:
+        elif self.sms_db_type == 2:
             cur.execute(SMS_MMSMS_QUERY)
 
         names = [description[0] for description in cur.description]
@@ -106,11 +109,12 @@ class SMS(AndroidExtraction):
         cur.close()
         conn.close()
 
-        self.log.info("Extracted a total of %d SMS messages containing links", len(self.results))
+        self.log.info("Extracted a total of %d SMS messages containing links",
+                      len(self.results))
 
     def _extract_sms_adb(self) -> None:
-        """Use the Android backup command to extract SMS data from the native SMS
-        app.
+        """Use the Android backup command to extract SMS data from the native
+        SMS app.
 
         It is crucial to use the under-documented "-nocompress" flag to disable
         the non-standard Java compression algorithm. This module only supports
@@ -123,8 +127,9 @@ class SMS(AndroidExtraction):
         try:
             self.results = parse_tar_for_sms(backup_tar)
         except AndroidBackupParsingError:
-            self.log.info("Impossible to read SMS from the Android Backup, please extract "
-                          "the SMS and try extracting it with Android Backup Extractor")
+            self.log.info("Impossible to read SMS from the Android Backup, "
+                          "please extract the SMS and try extracting it with "
+                          "Android Backup Extractor")
             return
 
         self.log.info("Extracted a total of %d SMS messages containing links",
@@ -133,15 +138,17 @@ class SMS(AndroidExtraction):
     def run(self) -> None:
         try:
             if (self._adb_check_file_exists(os.path.join("/", SMS_BUGLE_PATH))):
-                self.SMS_DB_TYPE = 1
-                self._adb_process_file(os.path.join("/", SMS_BUGLE_PATH), self._parse_db)
+                self.sms_db_type = 1
+                self._adb_process_file(os.path.join("/", SMS_BUGLE_PATH),
+                                       self._parse_db)
             elif (self._adb_check_file_exists(os.path.join("/", SMS_MMSSMS_PATH))):
-                self.SMS_DB_TYPE = 2
-                self._adb_process_file(os.path.join("/", SMS_MMSSMS_PATH), self._parse_db)
+                self.sms_db_type = 2
+                self._adb_process_file(os.path.join("/", SMS_MMSSMS_PATH),
+                                       self._parse_db)
             return
         except InsufficientPrivileges:
             pass
 
-        self.log.warn("No SMS database found. Trying extraction of SMS data using "
-                      "Android backup feature.")
+        self.log.warn("No SMS database found. Trying extraction of SMS data "
+                      "using Android backup feature.")
         self._extract_sms_adb()
