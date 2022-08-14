@@ -29,9 +29,18 @@ class Packages(BugReportModule):
         records = []
 
         timestamps = [
-            {"event": "package_install", "timestamp": record["timestamp"]},
-            {"event": "package_first_install", "timestamp": record["first_install_time"]},
-            {"event": "package_last_update", "timestamp": record["last_update_time"]},
+            {
+                "event": "package_install",
+                "timestamp": record["timestamp"]
+            },
+            {
+                "event": "package_first_install",
+                "timestamp": record["first_install_time"]
+            },
+            {
+                "event": "package_last_update",
+                "timestamp": record["last_update_time"]
+            },
         ]
 
         for timestamp in timestamps:
@@ -184,7 +193,8 @@ class Packages(BugReportModule):
                     dangerous_permissions_count += 1
 
             if dangerous_permissions_count >= DANGEROUS_PERMISSIONS_THRESHOLD:
-                self.log.info("Found package \"%s\" requested %d potentially dangerous permissions",
-                              result["package_name"], dangerous_permissions_count)
+                self.log.info("Found package \"%s\" requested %d potentially "
+                              "dangerous permissions", result["package_name"],
+                              dangerous_permissions_count)
 
         self.log.info("Extracted details on %d packages", len(self.results))
