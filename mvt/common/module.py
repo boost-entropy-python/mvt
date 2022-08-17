@@ -32,12 +32,12 @@ class MVTModule:
 
     def __init__(
         self,
-        file_path: Optional[str] = "",
-        target_path: Optional[str] = "",
-        results_path: Optional[str] = "",
+        file_path: Optional[str] = None,
+        target_path: Optional[str] = None,
+        results_path: Optional[str] = None,
         fast_mode: Optional[bool] = False,
         log: logging.Logger = logging.getLogger(__name__),
-        results: Optional[list] = []
+        results: Optional[list] = None
     ) -> None:
         """Initialize module.
 

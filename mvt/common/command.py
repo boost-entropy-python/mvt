@@ -21,11 +21,11 @@ class Command:
 
     def __init__(
         self,
-        target_path: Optional[str] = "",
-        results_path: Optional[str] = "",
-        ioc_files: Optional[list] = [],
-        module_name: Optional[str] = "",
-        serial: Optional[str] = "",
+        target_path: Optional[str] = None,
+        results_path: Optional[str] = None,
+        ioc_files: Optional[list] = None,
+        module_name: Optional[str] = None,
+        serial: Optional[str] = None,
         fast_mode: Optional[bool] = False,
         log: logging.Logger = logging.getLogger(__name__),
     ) -> None:
@@ -34,14 +34,14 @@ class Command:
 
         self.target_path = target_path
         self.results_path = results_path
-        self.ioc_files = ioc_files
+        self.ioc_files = ioc_files if ioc_files else []
         self.module_name = module_name
         self.serial = serial
         self.fast_mode = fast_mode
         self.log = log
 
         self.iocs = Indicators(log=log)
-        self.iocs.load_indicators_files(ioc_files)
+        self.iocs.load_indicators_files(self.ioc_files)
 
         # This list will contain all executed modules.
         # We can use this to reference e.g. self.executed[0].results.

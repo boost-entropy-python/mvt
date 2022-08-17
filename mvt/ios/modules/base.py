@@ -21,12 +21,12 @@ class IOSExtraction(MVTModule):
 
     def __init__(
         self,
-        file_path: Optional[str] = "",
-        target_path: Optional[str] = "",
-        results_path: Optional[str] = "",
+        file_path: Optional[str] = None,
+        target_path: Optional[str] = None,
+        results_path: Optional[str] = None,
         fast_mode: Optional[bool] = False,
         log: logging.Logger = logging.getLogger(__name__),
-        results: Optional[list] = []
+        results: Optional[list] = None
     ) -> None:
         super().__init__(file_path=file_path, target_path=target_path,
                          results_path=results_path, fast_mode=fast_mode,
@@ -82,8 +82,8 @@ class IOSExtraction(MVTModule):
 
     def _get_backup_files_from_manifest(
         self,
-        relative_path: Optional[str] = "",
-        domain: Optional[str] = ""
+        relative_path: Optional[str] = None,
+        domain: Optional[str] = None
     ) -> Iterator[dict]:
         """Locate files from Manifest.db.
 
@@ -139,8 +139,8 @@ class IOSExtraction(MVTModule):
 
     def _find_ios_database(
         self,
-        backup_ids: Optional[list] = [],
-        root_paths: Optional[list] = []
+        backup_ids: Optional[list] = None,
+        root_paths: Optional[list] = None
     ) -> None:
         """Try to locate a module's database file from either an iTunes
         backup or a full filesystem dump. This is intended only for
