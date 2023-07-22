@@ -3,7 +3,6 @@
 # Use of this software is governed by the MVT License 1.1 that can be found at
 #   https://license.mvt.re/1.1
 
-import getpass
 import logging
 from typing import Optional
 
@@ -14,6 +13,7 @@ from mvt.android.parsers.backup import (
     parse_backup_file,
     parse_tar_for_sms,
 )
+from mvt.android.modules.backup.helpers import prompt_or_load_android_backup_password
 
 from .base import AndroidQFModule
 
@@ -58,7 +58,13 @@ class SMS(AndroidQFModule):
 
         password = None
         if header["encryption"] != "none":
-            password = getpass.getpass(prompt="Backup Password: ", stream=None)
+            password = prompt_or_load_android_backup_password(
+                self.log, self.module_options
+            )
+            if not password:
+                self.log.critical("No backup password provided.")
+                return
+
         try:
             tardata = parse_backup_file(data, password=password)
         except InvalidBackupPassword:
