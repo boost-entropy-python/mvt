@@ -4,14 +4,14 @@
 #   https://license.mvt.re/1.1/
 
 import logging
-from typing import Optional, Union
+from typing import Optional
 
-from mvt.android.parsers import parse_dumpsys_battery_daily
+from mvt.android.artifacts.dumpsys_battery_daily import DumpsysBatteryDailyArtifact
 
 from .base import BugReportModule
 
 
-class BatteryDaily(BugReportModule):
+class BatteryDaily(DumpsysBatteryDailyArtifact, BugReportModule):
     """This module extracts records from battery daily updates."""
 
     def __init__(
@@ -32,26 +32,6 @@ class BatteryDaily(BugReportModule):
             results=results,
         )
 
-    def serialize(self, record: dict) -> Union[dict, list]:
-        return {
-            "timestamp": record["from"],
-            "module": self.__class__.__name__,
-            "event": "battery_daily",
-            "data": f"Recorded update of package {record['package_name']} "
-            f"with vers {record['vers']}",
-        }
-
-    def check_indicators(self) -> None:
-        if not self.indicators:
-            return
-
-        for result in self.results:
-            ioc = self.indicators.check_app_id(result["package_name"])
-            if ioc:
-                result["matched_indicator"] = ioc
-                self.detected.append(result)
-                continue
-
     def run(self) -> None:
         content = self._get_dumpstate_file()
         if not content:
@@ -61,30 +41,9 @@ class BatteryDaily(BugReportModule):
             )
             return
 
-        lines = []
-        in_batterystats = False
-        in_daily = False
-        for line in content.decode(errors="ignore").splitlines():
-            if line.strip() == "DUMP OF SERVICE batterystats:":
-                in_batterystats = True
-                continue
-
-            if not in_batterystats:
-                continue
-
-            if line.strip() == "Daily stats:":
-                lines.append(line)
-                in_daily = True
-                continue
-
-            if not in_daily:
-                continue
-
-            if line.strip() == "":
-                break
-
-            lines.append(line)
-
-        self.results = parse_dumpsys_battery_daily("\n".join(lines))
+        dumpsys_section = self.extract_dumpsys_section(
+            content.decode("utf-8", errors="replace"), "DUMP OF SERVICE batterystats:"
+        )
+        self.parse(dumpsys_section)
 
         self.log.info("Extracted a total of %d battery daily stats", len(self.results))
