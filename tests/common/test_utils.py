@@ -62,7 +62,7 @@ class TestHashes:
     def test_hash_from_folder(self):
         path = os.path.join(get_artifact_folder(), "androidqf")
         hashes = list(generate_hashes_from_path(path, logging))
-        assert len(hashes) == 6
+        assert len(hashes) == 7
         # Sort the files to have reliable order for tests.
         hashes = sorted(hashes, key=lambda x: x["file_path"])
         assert hashes[0]["file_path"] == os.path.join(path, "backup.ab")
@@ -71,9 +71,11 @@ class TestHashes:
             == "f0e32fe8a7fd5ac0e2de19636d123c0072e979396986139ba2bc49ec385dc325"
         )
         assert hashes[1]["file_path"] == os.path.join(path, "dumpsys.txt")
+
+        # This needs to be updated when we add or edit files in AndroidQF folder
         assert (
             hashes[1]["sha256"]
-            == "cfae0e04ef139b5a2ae1e2b3d400ce67eb98e67ff66f56ba2a580fe41bc120d0"
+            == "1bd255f656a7f9d5647a730f0f0cc47053115576f11532d41bf28c16635b193d"
         )
 
 
